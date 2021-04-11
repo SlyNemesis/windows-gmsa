@@ -17,7 +17,7 @@ This script:
  * deploys a k8s service running the webhook
  * registers that service as a webhook admission controller
 
-usage: $0 --file MANIFESTS_FILE [--name NAME] [--namespace NAMESPACE] [--image IMAGE_NAME] [--certs-dir CERTS_DIR] [--dry-run] [--overwrite] [--tolerate-master] [--rancher]
+usage: $0 --file MANIFESTS_FILE [--name NAME] [--namespace NAMESPACE] [--image IMAGE_NAME] [--certs-dir CERTS_DIR] [--dry-run] [--overwrite] [--tolerate-master] [--rancher] [--tolerate-rancher-linux]
 
 MANIFESTS_FILE is the path to the file the k8s manifests will be written to.
 NAME defaults to 'gmsa-webhook' and is used in the names of most of the k8s resources created.
@@ -84,6 +84,7 @@ main() {
     local DRY_RUN=false
     local OVERWRITE=false
     local TOLERATE_MASTER=false
+    local TOLERATE_RANCHER_LINUX=false
     local RANCHER=false
 
     # parse arguments
@@ -105,6 +106,8 @@ main() {
                 OVERWRITE=true && shift ;;
             --tolerate-master)
                 TOLERATE_MASTER=true && shift ;;
+            --tolerate-rancher-linux)
+                TOLERATE_RANCHER_LINUX=true && shift ;;
             --rancher)
                 RANCHER=true && shift ;;
             *)
@@ -158,7 +161,7 @@ main() {
 
     TOLERATIONS=''
     if $TOLERATE_MASTER; then
-      if ! $RANCHER; then
+      if ! $TOLERATE_RANCHER_LINUX; then
         TOLERATIONS='
       tolerations:
       - key: node-role.kubernetes.io/master
@@ -175,7 +178,7 @@ main() {
         value: linux
         effect: NoSchedule'
       fi
-    elif $RANCHER; then
+    elif $TOLERATE_RANCHER_LINUX; then
         TOLERATIONS='
       tolerations:
       - key: cattle.io/os
